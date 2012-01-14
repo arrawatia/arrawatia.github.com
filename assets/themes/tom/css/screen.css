@@ -195,3 +195,7 @@ ul.posts {
   #related h2 {
     margin-bottom: 1em;
   }
+img {
+	max-width: 600px;
+	max-height: 600px;
+}

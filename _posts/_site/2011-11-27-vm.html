@@ -1,0 +1,275 @@
+<h1 id='setting_up_a_standalone_hadoop_node'>Setting up a standalone Hadoop node</h1>
+<div class='maruku_toc'><ul style='list-style: none;' /></div>
+<ul>
+<li>
+<p><a href='#why_are_prepackaged_vm_environments_a_good_idea'>Why are prepackaged VM environments a good idea?</a></p>
+</li>
+
+<li>
+<p><a href='#why_install_from_scratch'>Why install from scratch?</a></p>
+</li>
+
+<li>
+<p><a href=''>Setup</a></p>
+
+<ol>
+<li>Install Virtualbox</li>
+</ol>
+</li>
+</ul>
+
+<p>2.</p>
+
+<h3 id='why_are_prepackaged_vm_environments_a_good_idea'>Why are prepackaged VM environments a good idea?</h3>
+
+<p>The CS246 class provides a VM for developing on Hadoop. It has an installation of Eclipse to write Hadoop jobs and standalone node of Hadoop as a runtime to test them. For a complex system like Hadoop with many moving parts, it provides a nice environment for getting started quickly . During my stint with IBM, I have found this to be the best way to setup an development environment for a large team as it provides a common platform which have no machine specific issues. I can tell you it is a nightmare for technical sales and the support team if the customer has a large team distributed with different vendors all over the world. The subtle differences in OS setup, antivirus software,etc. makes it a very difficult to get started. The best option is a prepackaged environment where everything is tested and ready to go.</p>
+
+<p>But this has a flip side too, VMs slow down horribly with use. I/O becomes a big bottleneck especially on desktop and laptop hosts as projects get larger. Compilation becomes slower as the number of files in your project files increases and testing the binaries becomes a pain as loading them takes longer and data size in the DB also increases. Then your fingers move to shortcuts in the muscle memory from using the host OS and weird things happen in the guest one. It happens a lot when you are near deadlines and it is not fun.</p>
+
+<h3 id='why_install_from_scratch'>Why install from scratch?</h3>
+
+<p>But all this is manageable, but for me it is very restrictive. I worked with a ton of demo/development/production environments prepackaged as VM and I think it is a great idea but nothing compares to the things you learn about the system when you set it up from scratch. This has been my approach to learning new things in the last 7 years. It cost me around 75% of my free time as installing enterprise software from scratch can be incredibly painful on a laptop. To give you an example : Installing IBM Connections requires setting up an application server, an LDAP server, a database server and a Web Server and then configuring the system to run 10 web applications with 7 database instances which communicate over HTTP and JMS. The total install size is over 10 GB and took around a 30 hrs to setup on my laptop on a good day.</p>
+
+<p>But I knew the system inside out after I had done it for 5 times. I could talk knowledgebly about the product to the customers, be it the CXO or the systems architect, I could commit realistic deadlines for a POC and confidently execute them too. I could isolate production issues on phone. I even conducted several trainings for it. And the best part is that I could come up new ideas while talking to the customers or shoot down bad ones because I knew the boundaries of the system.</p>
+
+<p>I can tell you that it feels good when you know something that well. I would have never been able to do that if I stuck to VMs. But that&#8217;s just me, a lot of people thought it was a waste of time and I should just stick to the VMs.</p>
+
+<p>So, let&#8217;s get started if want to try it out.</p>
+
+<h3 id='1install_virtualbox'>1.Install Virtualbox</h3>
+
+<p>Download and install <a href='https://www.virtualbox.org/wiki/Downloads'>Virtualbox</a>.</p>
+
+<h3 id='2create_a_new_vm_and_install_ubuntu'>2.Create a new VM and Install Ubuntu.</h3>
+
+<p>I like Ubuntu, it is lightweight and the package system just works. I am not fond of the newer unity interface so I stick to Ubuntu 10.10 LTS cause it is not going away any time <a href='http://www.ubuntu.com/business/desktop/overview#a-release-schedule-you-can-depend-on'>soon</a> .</p>
+
+<p>Again, there are VMs available for <a href='http://virtualboxes.org/images/ubuntu/'>Ubuntu</a>, but it is worthwhile to install it from scratch.</p>
+
+<p>So, here are the steps:</p>
+
+<ol>
+<li>Download the ISO from <a href='http://www.ubuntu.com/start-download?distro=desktop&amp;bits=32&amp;release=lts'>here</a>. This is the desktop version, you can use the server version if you want it more lightweight.</li>
+
+<li>Create a new VM.</li>
+
+<li>Point the CD drive to the ISO.</li>
+
+<li>Start the VM. Ignore any warning/popups about keyboard mouse gesture capture and integration.</li>
+
+<li>Start installation.</li>
+</ol>
+
+<p>Go through the slideshow for step-by-step screenshots.</p>
+
+<p>Tip : Make a copy and zip it, so that you can use it next time as a base VM.</p>
+
+<h3 id='3_setup_network_for_ssh'>3. Setup network for SSH</h3>
+
+<p>We would need to setup SSH and use it to manage the VM. As Hadoop can be managed from command line and the monitoring consoles are HTTP based we can run the VM in the background and manage it from command line and a browser.</p>
+
+<p>Virtual box has <a href='http://www.virtualbox.org/manual/ch06.html'>many adaptors</a> for networking. The ones I use are :</p>
+
+<ol>
+<li>Bridged - Its on the network and takes up IP and hostname from the DHCP (in our case it would be Stanford DHCP).</li>
+
+<li>NAT - Shares your host IP and lets you access the internet and other network resources.</li>
+
+<li>Internal Network - A private network between host and guest.</li>
+</ol>
+
+<p>I usually donot use bridged adaptor if I am the only one going to use the VM (I guess you would also need to conform to Stanford Computing guidelines on the VM if you use this). It is a good option if multiple people are working with the VM and you want it on the network(for example, if you want to setup a pilot, a demo or a shared development environment).</p>
+
+<p>I mostly use the NAT adaptor but it doesnot allow you to connect from the host to guest. So, we will need to setup another network interface with Internal network adaptor for SSH.</p>
+
+<p>This is what we will need for SSH to work.</p>
+
+<ol>
+<li>
+<p>Shut down Ubuntu.</p>
+</li>
+
+<li>
+<p>Add a new host-only network.</p>
+
+<p>Go to Virtualbox Preferences and create a new host-only network.</p>
+
+<p>If DHCP is not configured automatically use the following settings:</p>
+
+<pre><code>IP:             192.168.56.100
+NetworkMask:    255.255.255.0
+lowerIPAddress: 192.168.56.101
+upperIPAddress: 192.168.56.254</code></pre>
+</li>
+
+<li>
+<p>Add a second network adaptor.</p>
+
+<p>Go to the VM&#8217;s settings and configure a second network interface.</p>
+</li>
+
+<li>
+<p>Create a static IP for the internal network.</p>
+
+<p>If you use the DHCP to automatically get IP address for this interface, it might change when you reboot the VM. It is a bother to find the IP again to SSH into the VM. So for a development environment it makes a lot of sense to just make the IP static.</p>
+
+<p>Steps:</p>
+
+<ol>
+<li>
+<p>Start Ubuntu.</p>
+</li>
+
+<li>
+<p>Run</p>
+
+<pre><code>sudo ifconfig eth1</code></pre>
+
+<p>The output will be something like this</p>
+
+<pre><code>Link encap:Ethernet HWaddr XX:XX:XX:XX:XX:XX
+inet addr:192.168.56.101 Bcast:192.168.56.255 Mask:255.255.255.0
+inet6 addr: XXXX::XXXX:XXXX:XXXX:XXXX/64 Scope:Link
+UP BROADCAST RUNNING MULTICAST MTU:1500 Metric:1
+RX packets:296 errors:0 dropped:0 overruns:0 frame:0
+TX packets:237 errors:0 dropped:0 overruns:0 carrier:0
+collisions:0 txqueuelen:1000
+RX bytes:32116 (31.3 KiB) TX bytes:37642 (36.7 KiB)</code></pre>
+
+<p>The <code>inet addr:192.168.56.101</code> is your IP assigned by the DHCP. If the interface has no IP, select one within the IP range specified when you set up the host-only network above.</p>
+</li>
+
+<li>
+<p>Edit <code>/etc/network/interfaces</code> to include the following.</p>
+
+<pre><code>auto eth1
+iface eth1 inet static
+address 192.168.56.101
+netmask 255.255.255.0</code></pre>
+
+<p>Note that we are using <code>192.168.56.101</code> as the IP address.</p>
+</li>
+
+<li>
+<p>Reboot Ubuntu.</p>
+</li>
+</ol>
+</li>
+
+<li>
+<p>Install SSH daemon.</p>
+
+<p>Open the terminal in Ubuntu and run the following to install the SSH daemon.</p>
+
+<pre><code>sudo apt-get install openssh-server</code></pre>
+</li>
+
+<li>
+<p>Test connectivity from the host.</p>
+
+<p>On the mac, use terminal to ping the guest OS (On Windows, use cmd prompt).</p>
+
+<pre><code>ping 192.168.56.101</code></pre>
+
+<p>If it works, SSH into the VM. (On Windows, you would need PuTTY or something similar.)</p>
+
+<pre><code>ssh user@192.168.56.101</code></pre>
+
+<p>Answer <code>yes</code> to add key and you are done. From now onwards, you can minimize the VM and work directly from the terminal(or PuTTY console).</p>
+</li>
+
+<li>
+<p>Update Ubuntu.</p>
+
+<p>Update Ubuntu so that you donot get any nasty surprises when you start installing Hadoop.</p>
+
+<p>Type the following on the terminal (or PuTTY console).</p>
+
+<pre><code>sudo apt-get update
+sudo apt-get upgrade</code></pre>
+</li>
+</ol>
+
+<h3 id='4_setup_hadoop'>4. Setup Hadoop</h3>
+
+<p>Follow the excellent guide <a href=''>here</a>. Again, you can just use the terminal (or PuTTY console).</p>
+
+<p>Notes:</p>
+
+<ol>
+<li>
+<p>Add hadoop user to the sudo group after you create the hadoop users and group. It makes life easy otherwise you need to login as &#8216;user&#8217; to run sudo commands.</p>
+
+<ol>
+<li>
+<p>Type <code>sudo visudo</code> on the terminal.</p>
+</li>
+
+<li>
+<p>Navigate to the bottom using the down arrow key and type in</p>
+
+<pre><code>%hadoop ALL=(ALL) ALL</code></pre>
+
+<p>This adds <code>hadoop</code> group to the sudoers list.</p>
+</li>
+
+<li>
+<p>Now press Ctrl+X and press Y when promted to save. (Make sure the file is <code>/etc/sudoers</code> and not <code>/etc/sudoers.tmp</code>)</p>
+</li>
+</ol>
+</li>
+
+<li>
+<p>Run the following to get the version 0.20.2 of Hadoop which is the same as used in the class VM.</p>
+
+<pre><code>wget http://apache.cyberuse.com/hadoop/core/hadoop-0.20.2/hadoop-0.20.2.tar.gz</code></pre>
+</li>
+
+<li>
+<p>If you are running commands from the terminal, SSH directly using <code>hduser</code> instead of SSHing as <code>user</code> and running <code>su - hduser</code>. If you get errors while copying local files to HDFS on the terminal, this may be the reason.(I still need to figure out why it happens though.)</p>
+</li>
+
+<li>
+<p>There is bug in the HDFS Admin web app. The HDFS browser link points to localhost. (Looks like it is hardcoded :) ).To browse the HDFS using web interface on the host machine , you can use the URL :</p>
+
+<pre><code>http://192.168.56.101:50075/browseDirectory.jsp?namenodeInfoPort=50070&amp;dir=/</code></pre>
+</li>
+</ol>
+
+<h3 id='5_command_line_completion'>5. Command line completion</h3>
+
+<p>I found a neat contrib package for bash tab completion while browsing the source code. It provides tab completion for most hadoop commands.</p>
+
+<p>You can find it in <code>/usr/local/hadoop/src/contrib/bash-tab-completion</code>. Copy it to <code>/etc/bash_completion.d/</code> and bash will source it next time.</p>
+
+<p>It doesnot work directly on Ubuntu. There are two issues and the fixes are below:</p>
+
+<ol>
+<li>
+<p>It searches for the existence of hadoop (shell script) file. It fails as the command is on the path and it needs the full path to check. Change line no 29 from</p>
+
+<pre><code>script=${COMP_WORDS[0]} </code></pre>
+
+<p>to</p>
+
+<pre><code>script=`which ${COMP_WORDS[0]}` </code></pre>
+</li>
+
+<li>
+<p>It doesnot work well with gawk. So change the awk command to refer to mawk instead. Simply run the following</p>
+
+<p>sudo update-alternatives &#8211;config awk</p>
+</li>
+</ol>
+
+<p>Logout and login again and tab completion should work.</p>
+
+<h3 id='references'>References:</h3>
+
+<ul>
+<li>http://www.wiredrevolution.com/virtualbox/setup-ssh-access-between-virtualbox-host-and-guest-vms</li>
+
+<li>http://www.pendrivelinux.com/how-to-add-a-user-to-the-sudoers-list/</li>
+
+<li>http://ubuntuforums.org/showthread.php?t=474549</li>
+</ul>
